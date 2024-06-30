@@ -1,5 +1,5 @@
 // 管理员页面路径 （默认为 / 如果隐藏首页可设置为其他路径，例如：/admin ）
-const ADMIN_PATH = "/";
+const ADMIN_PATH = "/666";
 // API 路径
 const API_PATH = "/api";
 // 长链接键名
