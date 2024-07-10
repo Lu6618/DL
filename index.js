@@ -1,15 +1,3 @@
-// 管理员页面路径 （默认为 / 如果隐藏首页可设置为其他路径，例如：/admin ）
-const ADMIN_PATH = "/666";
-// API 路径
-const API_PATH = "/api";
-// 长链接键名
-const URL_KEY = "longUrl";
-// 短链接键名
-const URL_NAME = "shortCode";
-// 短链接键名（用于 API 返回）
-const SHORT_URL_KEY = "shorturl";
-// 静态首页源码链接 （设置首页替换页面，不需要也可以直接注释掉）
-// const STATICHTML = "https://raw.githubusercontent.com/Aiayw/CloudflareWorkerKV-UrlShort/main/404.html";
 addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request));
 });
@@ -29,7 +17,18 @@ async function handleRequest(request) {
   return handleMainRequest(request);
 }
 
-
+// 管理员页面路径 （默认为 / 如果隐藏首页可设置为其他路径，例如：/admin ）
+const ADMIN_PATH = "/666";
+// API 路径
+const API_PATH = "/api";
+// 长链接键名
+const URL_KEY = "longUrl";
+// 短链接键名
+const URL_NAME = "shortCode";
+// 短链接键名（用于 API 返回）
+const SHORT_URL_KEY = "shorturl";
+// 静态首页源码链接 （设置首页替换页面，不需要也可以直接注释掉）
+// const STATICHTML = "https://raw.githubusercontent.com/Aiayw/CloudflareWorkerKV-UrlShort/main/404.html";
 
 const index = `<!doctype html>
 <html lang="zh-CN">
