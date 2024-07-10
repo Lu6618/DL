@@ -1,22 +1,3 @@
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request));
-});
-
-async function handleRequest(request) {
-  const userAgent = request.headers.get('User-Agent');
-
-  // 定义需要重定向的爬虫 User-Agent 列表
-  const redirectUserAgents = ['TelegramBot', 'Twitterbot', 'Discordbot', 'Slackbot'];
-
-  // 检查 User-Agent 是否在需要重定向的列表中
-  if (redirectUserAgents.some(ua => userAgent.includes(ua))) {
-    return Response.redirect('https://t.me/MFJD666', 301);
-  }
-
-  // 继续处理其他请求
-  return handleMainRequest(request);
-}
-
 // 管理员页面路径 （默认为 / 如果隐藏首页可设置为其他路径，例如：/admin ）
 const ADMIN_PATH = "/666";
 // API 路径
@@ -385,4 +366,23 @@ if (pathname.startsWith(API_PATH)) {
   return new Response(`403`, {
     headers: { "content-type": "text/plain; charset=utf-8" },
   });
+}
+
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request));
+});
+
+async function handleRequest(request) {
+  const userAgent = request.headers.get('User-Agent');
+
+  // 定义需要重定向的爬虫 User-Agent 列表
+  const redirectUserAgents = ['TelegramBot', 'Twitterbot', 'Discordbot', 'Slackbot'];
+
+  // 检查 User-Agent 是否在需要重定向的列表中
+  if (redirectUserAgents.some(ua => userAgent.includes(ua))) {
+    return Response.redirect('https://t.me/MFJD666', 301);
+  }
+
+  // 继续处理其他请求
+  return handleMainRequest(request);
 }
