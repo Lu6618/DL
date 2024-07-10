@@ -8,7 +8,6 @@ const URL_KEY = "longUrl";
 const URL_NAME = "shortCode";
 // 短链接键名（用于 API 返回）
 const SHORT_URL_KEY = "shorturl";
-// 静态首页源码链接 （设置首页替换页面，不需要也可以直接注释掉）
 
 
 const index = `<!doctype html>
