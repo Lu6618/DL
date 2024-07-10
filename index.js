@@ -1,5 +1,5 @@
 // 管理员页面路径 （默认为 / 如果隐藏首页可设置为其他路径，例如：/admin ）
-const ADMIN_PATH = "/666";
+const ADMIN_PATH = "/";
 // API 路径
 const API_PATH = "/api";
 // 长链接键名
@@ -8,8 +8,6 @@ const URL_KEY = "longUrl";
 const URL_NAME = "shortCode";
 // 短链接键名（用于 API 返回）
 const SHORT_URL_KEY = "shorturl";
-// 静态首页源码链接 （设置首页替换页面，不需要也可以直接注释掉）
-// const STATICHTML = "https://raw.githubusercontent.com/Aiayw/CloudflareWorkerKV-UrlShort/main/404.html";
 
 const index = `<!doctype html>
 <html lang="zh-CN">
@@ -251,22 +249,9 @@ const index = `<!doctype html>
 
 </html>`;
 
-addEventListener('fetch', event => {
+addEventListener("fetch", (event) => {
   event.respondWith(handleRequest(event.request));
 });
-
-async function handleRequest(request) {
-  const userAgent = request.headers.get('User-Agent');
-
-  // 定义需要重定向的爬虫 User-Agent 列表
-  const redirectUserAgents = ['TelegramBot', 'Twitterbot', 'Discordbot', 'Slackbot'];
-
-  // 检查 User-Agent 是否在需要重定向的列表中
-  if (redirectUserAgents.some(ua => userAgent.includes(ua))) {
-    return Response.redirect('https://t.me/MFJD666', 301);
-  }
-
-}
 
 /**
  * Respond with hello worker text
