@@ -1,11 +1,39 @@
-const ADMIN_PATH = "/";
+// 管理员页面路径 （默认为 / 如果隐藏首页可设置为其他路径，例如：/admin ）
+const ADMIN_PATH = "/666";
+// API 路径
 const API_PATH = "/api";
+// 长链接键名
 const URL_KEY = "longUrl";
+// 短链接键名
 const URL_NAME = "shortCode";
+// 短链接键名（用于 API 返回）
 const SHORT_URL_KEY = "shorturl";
+// 静态首页源码链接 （设置首页替换页面，不需要也可以直接注释掉）
+// const STATICHTML = "https://raw.githubusercontent.com/Aiayw/CloudflareWorkerKV-UrlShort/main/404.html";
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request));
+});
+
+async function handleRequest(request) {
+  const userAgent = request.headers.get('User-Agent');
+
+  // 定义需要重定向的爬虫 User-Agent 列表
+  const redirectUserAgents = ['TelegramBot', 'Twitterbot', 'Discordbot', 'Slackbot'];
+
+  // 检查 User-Agent 是否在需要重定向的列表中
+  if (redirectUserAgents.some(ua => userAgent.includes(ua))) {
+    return Response.redirect('https://t.me/MFJD666', 301);
+  }
+
+  // 继续处理其他请求
+  return handleMainRequest(request);
+}
+
+
 
 const index = `<!doctype html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,6 +44,7 @@ const index = `<!doctype html>
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>">
     <title>简短分享 - 长网址缩短，文本分享，Html单页分享</title>
 </head>
+
 <style>
     .bd-placeholder-img {
         font-size: 1.125rem;
@@ -186,108 +215,175 @@ const index = `<!doctype html>
                     const toast = new bootstrap.Toast(document.getElementById('toast'));
                     toast.show();
                 }).catch(err => {
-                    console.error('Failed to copy: ', err);
+                    console.error('无法复制文本: ', err);
                 });
+            } else {
+                alert('没有文本可复制');
             }
         }
-
+        
         function getlink() {
-            const link = document.getElementById("link").value;
-            const expiration = document.getElementById("expiration").value;
-            const name = document.getElementById("name").value;
-            const type = document.getElementById("select").value;
-            const url = location.href + API_PATH;
-            const data = { "longUrl": link, "expiration": expiration, "type": type, "name": name };
-
-            if (link.trim() === "") {
-                alert("请输入内容！");
+            let link = document.getElementById('link').value.trim()
+            const name = document.getElementById('name').value
+            const type = document.getElementById('select').value
+            if (link === '') {
+                document.getElementById('result').innerHTML = "请输入链接/文本/HTML源代码"
                 return;
             }
-
-            if (type === 'link' && !isValidUrl(link)) {
-                alert("请输入有效的链接！");
+            if (link.indexOf('http') == -1 && type == "link") {
+                link = 'http://' + link
+            }
+            if (type == "link" && !isValidUrl(link)) {
+                document.getElementById('result').innerHTML = "请输入有效的URL格式"
                 return;
             }
-
-            postData(url, data).then((resp) => {
-                if (resp.status === 0) {
-                    document.getElementById("result").innerText = resp.shortUrl;
+            document.getElementById('result').innerHTML = "生成中.."
+            const expirationElement = document.getElementById('expiration');
+            const selectedIndex = expirationElement.selectedIndex;
+            const expiration = expirationElement.options[selectedIndex].value;
+            const burnAfterReading = expiration === 'burn_after_reading';
+            postData("${API_PATH}", {
+                "${URL_KEY}": link,
+                "${URL_NAME}": name,
+                "type": type,
+                "expiration": burnAfterReading ? -1 : expiration,
+                "burn_after_reading": burnAfterReading
+              }).then(resp => {
+                if (resp.error) {
+                  document.getElementById('result').innerHTML = resp.error;
+                  document.getElementById('name').value = ''
+                } else if (resp.value) {
+                  document.getElementById('result').innerHTML = resp.value;
                 } else {
-                    alert(resp.msg);
+                  var url = document.location.protocol + '//' + document.location.host + '/' + resp['${URL_NAME}']
+                  document.getElementById('result').innerHTML = url
+                  document.getElementById('link').value = ''
+                  document.getElementById('name').value = ''
+                  document.getElementById('select').selectedIndex = 0
                 }
-            }).catch((error) => {
-                console.error('Error:', error);
-            });
+              });
+              
         }
+
     </script>
+
 </body>
+
 </html>`;
 
-addEventListener('fetch', event => {
+addEventListener("fetch", (event) => {
   event.respondWith(handleRequest(event.request));
 });
 
+/**
+ * Respond with hello worker text
+ * @param {Request} request
+ */
+
 async function handleRequest(request) {
-  const userAgent = request.headers.get('User-Agent');
-
-  // 定义需要重定向的爬虫 User-Agent 列表
-  const redirectUserAgents = ['TelegramBot', 'Twitterbot', 'Discordbot', 'Slackbot'];
-
-  // 检查 User-Agent 是否在需要重定向的列表中
-  if (redirectUserAgents.some(ua => userAgent.includes(ua))) {
-    return Response.redirect('https://t.me/MFJD666', 301);
-  }
-
-  // 继续处理其他请求
-  return handleMainRequest(request);
-}
-
-// 处理其他请求的主要逻辑
-async function handleMainRequest(request) {
-  const url = new URL(request.url);
-  const pathname = url.pathname;
-
-  if (request.method === 'POST' && pathname === API_PATH) {
-    const body = await request.json();
-    const longUrl = body.longUrl;
-    const expiration = body.expiration;
-    const name = body.name;
-    const type = body.type;
-
-    const shortCode = generateShortCode();
-    const shortUrl = `${url.origin}/${shortCode}`;
-
-    // Store the longUrl and additional information in KV
-    await URL_STORAGE.put(shortCode, JSON.stringify({ longUrl, expiration, type, name }));
-
-    const response = { status: 0, shortUrl: shortUrl };
-    return new Response(JSON.stringify(response), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
-  }
-
-  if (pathname.startsWith(`/${ADMIN_PATH}/`)) {
-    // Handle admin path requests if needed
-  }
-
-  if (pathname === '/') {
+  const { protocol, hostname, pathname } = new URL(request.url);
+  // index.html
+  if (pathname == ADMIN_PATH) {
     return new Response(index, {
-      headers: { 'Content-Type': 'text/html;charset=UTF-8' },
+      headers: { "content-type": "text/html; charset=utf-8" },
     });
   }
-
-  // Handle redirect for short URLs
-  const shortCode = pathname.slice(1);
-  const value = await URL_STORAGE.get(shortCode);
-
-  if (value) {
-    const { longUrl } = JSON.parse(value);
-    return Response.redirect(longUrl, 301);
+  // short api
+if (pathname.startsWith(API_PATH)) {
+    const body = JSON.parse(await request.text());
+    console.log(body);
+    var short_type = "link";
+    if (body["type"] != undefined && body["type"] != "") {
+      short_type = body["type"];
+    }
+    if (
+      body[URL_NAME] == undefined ||
+      body[URL_NAME] == "" ||
+      body[URL_NAME].length < 2
+    ) {
+      body[URL_NAME] = Math.random().toString(36).slice(-6);
+    }
+    
+    // 检查自定义后缀是否已经存在
+    if (await shortlink.get(body[URL_NAME])) {
+      return new Response(
+        JSON.stringify({ error: "该后缀已经被使用，请使用其他后缀。" }),
+        {
+          headers: { "Content-Type": "application/json; charset=utf-8" },
+        }
+      );
+    }
+    
+    const expiration = parseInt(body["expiration"]);
+    let expiresAt = null;
+    await shortlink.put(
+      body[URL_NAME],
+      JSON.stringify({
+        type: short_type,
+        value: body[URL_KEY],
+        expiresAt: expiresAt ? expiresAt.toISOString() : null,
+        burn_after_reading: body["burn_after_reading"], 
+      })
+    );
+     // Remove other fields from the response body
+    const responseBody = {
+      type: body.type,
+      shorturl: `${protocol}//${hostname}/${body[URL_NAME]}`,
+      shortCode: body[URL_NAME],
+    };
+    
+    // Add Access-Control-Allow-Origin header to the response
+    return new Response(JSON.stringify(responseBody), {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
   }
-
-  return new Response('404 Not Found', { status: 404 });
-}
-
-function generateShortCode() {
-  return Math.random().toString(36).substring(2, 8);
+  
+  const key = pathname.replace("/", "");
+  if (key !== "" && !(await shortlink.get(key))) {
+    return Response.redirect(`${protocol}//${hostname}${ADMIN_PATH}`, 302);
+  }
+  if (key == "") {
+    const html = await fetch(STATICHTML);
+    return new Response(await html.text(), {
+      headers: {
+        "content-type": "text/html;charset=UTF-8",
+      },
+    });
+  }
+  let link = await shortlink.get(key);
+  if (link != null) {
+    link = JSON.parse(link);
+    console.log(link);
+    const expiresAt = link["expiresAt"] ? new Date(link["expiresAt"]) : null;
+    const now = new Date();
+    if (expiresAt && now >= expiresAt) {
+      return new Response(`链接已过期`, {
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      });
+    }
+    // 删除阅后即焚的链接
+    if (link["burn_after_reading"]) {
+      await shortlink.delete(key);
+    }
+    // redirect
+    if (link["type"] == "link") {
+      return Response.redirect(link["value"], 302);
+    }
+    if (link["type"] == "html") {
+      return new Response(link["value"], {
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    } else {
+      // textarea
+      return new Response(`${link["value"]}`, {
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      });
+    }
+  }
+  return new Response(`403`, {
+    headers: { "content-type": "text/plain; charset=utf-8" },
+  });
 }
